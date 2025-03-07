@@ -1,0 +1,58 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "master" branch
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+      # Runs a set of commands using the runners shell
+      - name: Run a multi-line script
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
+      - name: List current directory
+        run: ls
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+           python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pytest 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+            aws-access-key-id: ${{ secrets.ASIAVPEYOOYDIMMELZ4I }}
+            aws-secret-access-key: ${{ secrets.0QWFhT6KLWhgJGtJL1/sXYOLa1YZks4pJCGf7oTL }}
+            aws-session-token: ${{ secrets.IQoJb3JpZ2luX2VjEP///////////wEaCXVzLXdlc3QtMiJGMEQCIFokiWSxHFAMwaJIA05ZrRAB7LOWs8S696SiFGSIbNXJAiAadhGCrF/EnctXNuO1Hq5kxDdLE8O3oWHZ/BIJOZGQmyqyAghIEAAaDDM3NjEyOTM1MzIyMiIMkR3ni3spENoVHwFjKo8CONtOm49rcqg9UiQR7ayE+MflIPfDaVRTGwlnaoXfQVtdS4yb5OSk6SZz4DW8JPRD+vAh0/JtL7mAyy+vo0wKufBFKE1mBvZ0gdkOYAZnSqOZrw5VgDTd35HVSMiW+9EXuLwmOkkRx6K+R3MxQl/sxLfHb7X1M08627UqR4bYS351pfghulognDbOcismDfSFMt+OuPAafdfsq/d+ewOtaM1RGT5/7mW3apfSTwK2ApjOLzlkFfhHZNs4xfG8NWqGSSQ4Z0+AbUI0GFNsuy7q5i77fHTZmQiIBtRt6ZoJ1CLa1HEv/CB5+jq+F/S7jFCN3eXVnzOqcR9GXV2Q9DSeYNylNRFAmZCM+CM6bKUKETCygqy+BjqeAXsgx6QwKhGKvQn586VybUzanCwI20WGtV79shdM8UCLFcMaHQW3XNVeY6MFARwy7+HQCLLsTAsFrTFDUefACf/VNRDCmQ5nesPdtyxQ7h4b6OJeBg5MCkJC40PSyx+hqb6abos45Gr5/7yXNFohSLNp/qpg1VA+Zsf+RUavO+Gx6OmWAC87iriEnP+mBV4hSxlTNDLtUr9kyWCZGokD }}
+            aws-region: us-east-1
+      - name: List buckets
+        run: aws s3 ls
+        
+        
