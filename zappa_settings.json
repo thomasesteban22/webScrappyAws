@@ -1,0 +1,16 @@
+{
+    "production": {
+        "app_function": "webScrappyMitula.lambda_funcion",
+        "aws_region": "us-east-1",
+        "profile_name": "default",
+        "project_name": "webScrappyMitula",
+        "runtime": "python3.12",
+        "s3_bucket": "landingcasas101012",
+        "timeout_seconds": 30,
+        "events": [{
+            "function": "webScrappyMitula.lambda_funcion",
+            "expression": "cron(0 9 ? * MON *)"
+        }]
+    }
+}
+
