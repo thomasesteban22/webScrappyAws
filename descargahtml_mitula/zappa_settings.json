@@ -15,7 +15,7 @@
     "events": [
       {
         "function": "mainScrappy.download_pages",
-        "expression": "cron(43 13 * * ? *)"
+        "expression": "cron(0 9 ? * MON *)"
       }
     ]
   }
