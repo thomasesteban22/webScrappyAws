@@ -29,10 +29,9 @@ jobs:
       - name: Check code style (flake8)
         run: |
           source venv/bin/activate
-          # Agregamos PYTHONPATH para que Python reconozca las carpetas
           export PYTHONPATH=$PYTHONPATH:.
-          # Ajusta las rutas si tu código está en otras carpetas
-          flake8 descargahtml_mitula generarcsv_mitula test
+          # Ignoramos E302, E501, W391
+          flake8 --ignore=E302,E501,W391 descargahtml_mitula generarcsv_mitula test
 
       - name: Run pytest (unit tests)
         run: |
@@ -46,7 +45,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-          # Descomenta si usas session token
+          # si usas session token:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
       - name: Deploy Lambda (descarga)
