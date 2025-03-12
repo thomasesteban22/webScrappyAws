@@ -1,86 +1,92 @@
-import requests
-import datetime
-import boto3
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+import pytest
+from unittest.mock import patch, MagicMock
+from descargahtml_mitula.mainScrappy import download_pages
 
 
-def download_pages(event, context):
+@pytest.fixture
+def mock_event():
+    return {}
+
+
+@pytest.fixture
+def mock_context():
+    return {}
+
+
+@patch("descargahtml_mitula.mainScrappy.requests.Session")
+@patch("descargahtml_mitula.mainScrappy.boto3.client")
+def test_download_ok(mock_boto3_client, mock_requests_session,
+                     mock_event, mock_context):
     """
-    Descarga 10 páginas de Mitula y sube .html al bucket
-    'dlandingcasas-mitula'.Al final, crea un archivo 'ready.txt' para disparar
-    la Lambda que genera el
-    CSV.
+    Caso 1: Todas las páginas devuelven 200, se suben 10 .html a S3.
     """
-    s3 = boto3.client("s3")
-    bucket_html = "dlandingcasas-mitula"  # Ajusta con tu bucket
+    mock_session_instance = MagicMock()
+    mock_requests_session.return_value = mock_session_instance
 
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    base_url = (
-        "https://casas.mitula.com.co/find?"
-        "operationType=sell&propertyType=apartment"
-        "&geoId=mitula-CO-poblacion-0000014156"
-        "&text=Bogot%C3%A1%2C++%28Cundinamarca%29"
-    )
+    mock_response = MagicMock(status_code=200, text="<html>OK</html>")
+    mock_session_instance.get.return_value = mock_response
 
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/98.0.4758.102 Safari/537.36"
-        ),
-        "Accept-Language": "es-ES,es;q=0.9",
-    }
-    session = requests.Session()
-    session.headers.update(headers)
+    mock_s3 = MagicMock()
+    mock_boto3_client.return_value = mock_s3
 
-    retry_strategy = Retry(
-        total=3,
-        backoff_factor=1,
-        status_forcelist=[429, 500, 502, 503, 504],
-    )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
+    result = download_pages(mock_event, mock_context)
 
-    for page in range(1, 11):
-        url = f"{base_url}&page={page}"
-        response = session.get(url, timeout=10)
+    assert result["status"] == "success"
+    assert mock_session_instance.get.call_count == 10
+    assert mock_s3.put_object.call_count == 10
 
-        if response.status_code == 200:
-            page_html = response.text
-            s3_key = f"{today}/{today}-{page}.html"
-            s3.put_object(
-                Bucket=bucket_html,
-                Key=s3_key,
-                Body=page_html,
-                ContentType="text/html"
-            )
-            print(f"[INFO] Página {page} guardada: {s3_key}")
+
+@patch("descargahtml_mitula.mainScrappy.requests.Session")
+@patch("descargahtml_mitula.mainScrappy.boto3.client")
+def test_download_404(mock_boto3_client, mock_requests_session,
+                      mock_event, mock_context):
+    """
+    Caso 2: Todas devuelven 404, no se sube nada a S3.
+    """
+    mock_session_instance = MagicMock()
+    mock_requests_session.return_value = mock_session_instance
+
+    mock_response = MagicMock(status_code=404, text="Not Found")
+    mock_session_instance.get.return_value = mock_response
+
+    mock_s3 = MagicMock()
+    mock_boto3_client.return_value = mock_s3
+
+    result = download_pages(mock_event, mock_context)
+
+    assert result["status"] == "success"
+    assert mock_session_instance.get.call_count == 10
+    assert mock_s3.put_object.call_count == 0
+
+
+@patch("descargahtml_mitula.mainScrappy.requests.Session")
+@patch("descargahtml_mitula.mainScrappy.boto3.client")
+def test_download_partial(mock_boto3_client, mock_requests_session,
+                          mock_event, mock_context):
+    """
+    Caso 3: Algunas páginas 200, otras 500 => sube solo las 200.
+    """
+    mock_session_instance = MagicMock()
+    mock_requests_session.return_value = mock_session_instance
+
+    responses = []
+    for i in range(10):
+        r = MagicMock()
+        if i < 5:
+            r.status_code = 200
+            r.text = f"<html>Fake page {i}</html>"
         else:
-            print(
-                f"[WARN] Página {page} status_code: "
-                f"{response.status_code}"
-            )
+            r.status_code = 500
+            r.text = "Server Error"
+        responses.append(r)
 
-    # Crear 'ready.txt' para disparar la Lambda de CSV
-    # (Contenido opcional, con un simple mensaje)
-    ready_content = (
-        f"Archivos .html creados el {today}. "
-        "Procesar CSV."
-    )
-    s3.put_object(
-        Bucket=bucket_html,
-        Key="ready.txt",
-        Body=ready_content.encode("utf-8"),
-        ContentType="text/plain"
-    )
-    print("[INFO] 'ready.txt' creado para disparar la generación de CSV.")
+    mock_session_instance.get.side_effect = responses
 
-    return {
-        "status": "success",
-        "message": (
-            f"Se descargaron 10 páginas en {bucket_html} y se creó "
-            "'ready.txt'."
-        )
-    }
+    mock_s3 = MagicMock()
+    mock_boto3_client.return_value = mock_s3
+
+    result = download_pages(mock_event, mock_context)
+
+    assert result["status"] == "success"
+    assert mock_session_instance.get.call_count == 10
+    assert mock_s3.put_object.call_count == 5
