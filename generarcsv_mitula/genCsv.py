@@ -1,9 +1,8 @@
-# generarcsv_mitula/genCsv.py
-
 import boto3
 import csv
 import io
 from bs4 import BeautifulSoup
+
 
 def lambda_handler(event, context):
     """
@@ -11,6 +10,7 @@ def lambda_handler(event, context):
     Procesa todos los .html y genera un CSV en 'rlandingcasas-mitula'.
     Luego, borra el 'ready.txt' para evitar re-disparar la Lambda.
     """
+
     s3 = boto3.client('s3')
 
     record = event['Records'][0]
@@ -19,17 +19,34 @@ def lambda_handler(event, context):
 
     if source_key != "ready.txt":
         print(f"[INFO] No es 'ready.txt'. Se ignora: {source_key}")
-        return {"statusCode": 200, "body": "Archivo no es ready.txt"}
+        return {
+            "statusCode": 200,
+            "body": "Archivo no es ready.txt"
+        }
 
     # Listar .html
     response = s3.list_objects_v2(Bucket=source_bucket)
     contents = response.get("Contents", [])
-    html_keys = [obj["Key"] for obj in contents if obj["Key"].endswith(".html")]
+    html_keys = [
+        obj["Key"]
+        for obj in contents
+        if obj["Key"].endswith(".html")
+    ]
 
-    print(f"[INFO] Se encontraron {len(html_keys)} archivos .html para procesar.")
+    print(
+        f"[INFO] Se encontraron {len(html_keys)} archivos .html "
+        "para procesar."
+    )
 
     all_rows = []
-    header = ["FechaDescarga", "Barrio", "Valor", "NumHabitaciones", "NumBanos", "mts2"]
+    header = [
+        "FechaDescarga",
+        "Barrio",
+        "Valor",
+        "NumHabitaciones",
+        "NumBanos",
+        "mts2",
+    ]
     all_rows.append(header)
 
     for key in html_keys:
@@ -42,13 +59,40 @@ def lambda_handler(event, context):
         fecha_descarga = key.replace(".html", "")
 
         for listing in listings:
-            barrio = listing.find("span", class_="barrio").get_text(strip=True) if listing.find("span", class_="barrio") else ""
-            valor  = listing.find("span", class_="valor").get_text(strip=True) if listing.find("span", class_="valor") else ""
-            habs   = listing.find("span", class_="habitaciones").get_text(strip=True) if listing.find("span", class_="habitaciones") else ""
-            banos  = listing.find("span", class_="banos").get_text(strip=True) if listing.find("span", class_="banos") else ""
-            mts2   = listing.find("span", class_="mts2").get_text(strip=True) if listing.find("span", class_="mts2") else ""
+            barrio = (
+                listing.find("span", class_="barrio").get_text(strip=True)
+                if listing.find("span", class_="barrio")
+                else ""
+            )
+            valor = (
+                listing.find("span", class_="valor").get_text(strip=True)
+                if listing.find("span", class_="valor")
+                else ""
+            )
+            habs = (
+                listing.find("span", class_="habs").get_text(strip=True)
+                if listing.find("span", class_="habitaciones")
+                else ""
+            )
+            banos = (
+                listing.find("span", class_="banos").get_text(strip=True)
+                if listing.find("span", class_="banos")
+                else ""
+            )
+            mts2 = (
+                listing.find("span", class_="mts2").get_text(strip=True)
+                if listing.find("span", class_="mts2")
+                else ""
+            )
 
-            all_rows.append([fecha_descarga, barrio, valor, habs, banos, mts2])
+            all_rows.append([
+                fecha_descarga,
+                barrio,
+                valor,
+                habs,
+                banos,
+                mts2,
+            ])
 
     # Generar CSV
     csv_buffer = io.StringIO()
@@ -62,9 +106,12 @@ def lambda_handler(event, context):
         Bucket=final_bucket,
         Key=final_key,
         Body=csv_buffer.getvalue(),
-        ContentType="text/csv"
+        ContentType="text/csv",
     )
-    print(f"[INFO] CSV '{final_key}' creado con {len(html_keys)} archivos en '{final_bucket}'.")
+    print(
+        f"[INFO] CSV '{final_key}' creado con {len(html_keys)} archivos "
+        f"en '{final_bucket}'."
+    )
 
     # Borrar 'ready.txt' para no re-disparar la Lambda
     s3.delete_object(Bucket=source_bucket, Key="ready.txt")
@@ -72,5 +119,8 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": f"CSV '{final_key}' generado y 'ready.txt' borrado."
+        "body": (
+            f"CSV '{final_key}' generado y 'ready.txt' borrado. "
+            f"Procesados {len(html_keys)} archivos."
+        )
     }

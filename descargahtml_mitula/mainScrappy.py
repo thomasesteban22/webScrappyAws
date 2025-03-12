@@ -1,15 +1,16 @@
-# descargahtml_mitula/mainScrappy.py
-
 import requests
 import datetime
 import boto3
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
+
 def download_pages(event, context):
     """
-    Descarga 10 páginas de Mitula y sube .html al bucket 'dlandingcasas-mitula'.
-    Al final, crea un archivo 'ready.txt' para disparar la Lambda que genera el CSV.
+    Descarga 10 páginas de Mitula y sube .html al bucket
+    'dlandingcasas-mitula'.Al final, crea un archivo 'ready.txt' para disparar
+    la Lambda que genera el
+    CSV.
     """
     s3 = boto3.client("s3")
     bucket_html = "dlandingcasas-mitula"  # Ajusta con tu bucket
@@ -57,11 +58,17 @@ def download_pages(event, context):
             )
             print(f"[INFO] Página {page} guardada: {s3_key}")
         else:
-            print(f"[WARN] Página {page} status_code: {response.status_code}")
+            print(
+                f"[WARN] Página {page} status_code: "
+                f"{response.status_code}"
+            )
 
     # Crear 'ready.txt' para disparar la Lambda de CSV
     # (Contenido opcional, con un simple mensaje)
-    ready_content = f"Archivos .html creados el {today}. Procesar CSV."
+    ready_content = (
+        f"Archivos .html creados el {today}. "
+        "Procesar CSV."
+    )
     s3.put_object(
         Bucket=bucket_html,
         Key="ready.txt",
@@ -72,5 +79,8 @@ def download_pages(event, context):
 
     return {
         "status": "success",
-        "message": f"Se descargaron 10 páginas en {bucket_html} y se creó 'ready.txt'."
+        "message": (
+            f"Se descargaron 10 páginas en {bucket_html} y se creó "
+            "'ready.txt'."
+        )
     }
