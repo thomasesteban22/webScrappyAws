@@ -51,11 +51,10 @@ jobs:
         run: |
           source .venv/bin/activate
           cd descargahtml_mitula
-          # Intenta update, si falla => deploy
-          zappa update dev || zappa deploy dev
+          zappa update dev
 
       - name: Deploy Lambda (genera CSV)
         run: |
           source .venv/bin/activate
           cd ../generarcsv_mitula
-          zappa update dev || zappa deploy dev
+          zappa update dev
