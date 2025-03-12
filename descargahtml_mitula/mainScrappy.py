@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from descargahtml_mitula.mainScrappy import download_pages
 
 
 @pytest.fixture
