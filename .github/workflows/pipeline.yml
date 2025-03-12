@@ -26,12 +26,20 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Check code style (flake8)
+      - name: Create AWS Profile
+        run: |
+          mkdir -p ~/.aws
+          echo "[default]" > ~/.aws/credentials
+          echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+          echo "region=us-east-1" >> ~/.aws/credentials
+        # No 'uses:' needed; it's just a run step.
+
+      - name: Check code style (flake8)  # (Opcional)
         run: |
           source venv/bin/activate
           export PYTHONPATH=$PYTHONPATH:.
-          # Ignoramos E302, E501, W391
-          flake8 --ignore=E302,E501,W391 descargahtml_mitula generarcsv_mitula test
+          flake8 --ignore=E501,E302,W391 descargahtml_mitula generarcsv_mitula test
 
       - name: Run pytest (unit tests)
         run: |
@@ -39,14 +47,8 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:.
           pytest
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-          # si usas session token:
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+      # (Opcional) "Configure AWS Credentials" step can be removed if you rely on the local profile
+      # or you can keep it if you want environment variables as well.
 
       - name: Deploy Lambda (descarga)
         run: |
