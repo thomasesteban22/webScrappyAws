@@ -1,14 +1,21 @@
 import pytest
 from unittest.mock import patch, MagicMock
+from descargahtml_mitula.mainScrappy import download_pages
 
 
 @pytest.fixture
 def mock_event():
+    """
+    Fixture para simular el event.
+    """
     return {}
 
 
 @pytest.fixture
 def mock_context():
+    """
+    Fixture para simular el contexto Lambda.
+    """
     return {}
 
 
