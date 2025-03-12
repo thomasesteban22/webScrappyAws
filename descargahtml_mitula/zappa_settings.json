@@ -1,0 +1,22 @@
+{
+  "dev": {
+    "app_function": "mainScrappy.download_pages",
+    "aws_region": "us-east-1",
+    "profile_name": "default",
+    "project_name": "descarga-mitula",
+    "runtime": "python3.10",
+    "s3_bucket": "zappa-bk1bqkkq6",
+    "manage_roles": false,
+    "role_name": "LabRole",
+    "timeout_seconds": 300,
+    "memory_size": 1024,
+    "apigateway_enabled": false,
+    "keep_warm": false,
+    "events": [
+      {
+        "function": "mainScrappy.download_pages",
+        "expression": "cron(43 13 * * ? *)"
+      }
+    ]
+  }
+}
