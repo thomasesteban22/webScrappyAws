@@ -60,4 +60,5 @@ jobs:
         run: |
           source venv/bin/activate
           cd ../generarcsv_mitula
+          zappa deploy dev
           zappa update dev
