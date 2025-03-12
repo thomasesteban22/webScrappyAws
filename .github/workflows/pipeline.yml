@@ -26,9 +26,18 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Check code style (flake8)
+        run: |
+          source venv/bin/activate
+          # Agregamos PYTHONPATH para que Python reconozca las carpetas
+          export PYTHONPATH=$PYTHONPATH:.
+          # Ajusta las rutas si tu código está en otras carpetas
+          flake8 descargahtml_mitula generarcsv_mitula test
+
       - name: Run pytest (unit tests)
         run: |
           source venv/bin/activate
+          export PYTHONPATH=$PYTHONPATH:.
           pytest
 
       - name: Configure AWS Credentials
@@ -37,7 +46,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-          # si usas session token:
+          # Descomenta si usas session token
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
       - name: Deploy Lambda (descarga)
@@ -51,4 +60,3 @@ jobs:
           source venv/bin/activate
           cd ../generarcsv_mitula
           zappa update dev
-
