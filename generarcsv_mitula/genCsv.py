@@ -7,9 +7,9 @@ from bs4 import BeautifulSoup
 
 def lambda_handler(event, context):
     """
-    Se dispara si se sube 'ready.txt' a 'dlandingcasas-mitula'.
-    Lista todos los .html, los parsea y genera un CSV en 'rlandingcasas-mitula'.
-    Columnas: FechaDescarga, Barrio, Valor, NumHabitaciones, NumBanos, mts2
+    Se dispara al subirse 'ready.txt' a 'dlandingcasas-mitula'.
+    Procesa todos los .html y genera un CSV en 'rlandingcasas-mitula'.
+    Luego, borra el 'ready.txt' para evitar re-disparar la Lambda.
     """
     s3 = boto3.client('s3')
 
@@ -18,15 +18,15 @@ def lambda_handler(event, context):
     source_key = record['s3']['object']['key']
 
     if source_key != "ready.txt":
-        print(f"[INFO] No es ready.txt. Se ignora: {source_key}")
-        return {"statusCode": 200, "body": "Archivo no es ready.txt, no se procesa"}
+        print(f"[INFO] No es 'ready.txt'. Se ignora: {source_key}")
+        return {"statusCode": 200, "body": "Archivo no es ready.txt"}
 
-    # Listar los .html
+    # Listar .html
     response = s3.list_objects_v2(Bucket=source_bucket)
     contents = response.get("Contents", [])
     html_keys = [obj["Key"] for obj in contents if obj["Key"].endswith(".html")]
 
-    print(f"[INFO] Se encontraron {len(html_keys)} .html para procesar.")
+    print(f"[INFO] Se encontraron {len(html_keys)} archivos .html para procesar.")
 
     all_rows = []
     header = ["FechaDescarga", "Barrio", "Valor", "NumHabitaciones", "NumBanos", "mts2"]
@@ -64,6 +64,13 @@ def lambda_handler(event, context):
         Body=csv_buffer.getvalue(),
         ContentType="text/csv"
     )
+    print(f"[INFO] CSV '{final_key}' creado con {len(html_keys)} archivos en '{final_bucket}'.")
 
-    print(f"[INFO] CSV '{final_key}' creado con {len(html_keys)} archivos procesados en '{final_bucket}'.")
-    return {"statusCode": 200, "body": f"CSV '{final_key}' generado con {len(html_keys)} .html."}
+    # Borrar 'ready.txt' para no re-disparar la Lambda
+    s3.delete_object(Bucket=source_bucket, Key="ready.txt")
+    print("[INFO] 'ready.txt' eliminado tras procesar .html.")
+
+    return {
+        "statusCode": 200,
+        "body": f"CSV '{final_key}' generado y 'ready.txt' borrado."
+    }

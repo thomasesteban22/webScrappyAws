@@ -8,11 +8,11 @@ from requests.packages.urllib3.util.retry import Retry
 
 def download_pages(event, context):
     """
-    Se ejecuta con un cron poco frecuente (p. ej. 1 vez al día).
     Descarga 10 páginas de Mitula y sube .html al bucket 'dlandingcasas-mitula'.
+    Al final, crea un archivo 'ready.txt' para disparar la Lambda que genera el CSV.
     """
     s3 = boto3.client("s3")
-    bucket_html = "dlandingcasas-mitula"  # Ajusta con tu bucket de aterrizaje
+    bucket_html = "dlandingcasas-mitula"  # Ajusta con tu bucket
 
     today = datetime.datetime.now().strftime('%Y-%m-%d')
     base_url = (
@@ -22,7 +22,6 @@ def download_pages(event, context):
         "&text=Bogot%C3%A1%2C++%28Cundinamarca%29"
     )
 
-    # Cabeceras para evitar captcha
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -60,7 +59,18 @@ def download_pages(event, context):
         else:
             print(f"[WARN] Página {page} status_code: {response.status_code}")
 
+    # Crear 'ready.txt' para disparar la Lambda de CSV
+    # (Contenido opcional, con un simple mensaje)
+    ready_content = f"Archivos .html creados el {today}. Procesar CSV."
+    s3.put_object(
+        Bucket=bucket_html,
+        Key="ready.txt",
+        Body=ready_content.encode("utf-8"),
+        ContentType="text/plain"
+    )
+    print("[INFO] 'ready.txt' creado para disparar la generación de CSV.")
+
     return {
         "status": "success",
-        "message": f"Descargadas 10 páginas en {bucket_html}."
+        "message": f"Se descargaron 10 páginas en {bucket_html} y se creó 'ready.txt'."
     }
