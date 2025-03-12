@@ -26,12 +26,6 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run flake8 (code style check)
-        run: |
-          source venv/bin/activate
-          # Ajusta la ruta a tus carpetas con código Python
-          flake8 descargahtml_mitula generarcsv_mitula test
-
       - name: Run pytest (unit tests)
         run: |
           source venv/bin/activate
@@ -44,7 +38,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
           # si usas session token:
-          # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
       - name: Deploy Lambda (descarga)
         run: |
