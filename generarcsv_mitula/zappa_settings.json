@@ -1,0 +1,33 @@
+{
+  "dev": {
+    "app_function": "genCsv.lambda_handler",
+    "aws_region": "us-east-1",
+    "profile_name": "default",
+    "project_name": "gen-csv-lambda",
+    "runtime": "python3.10",
+    "s3_bucket": "zappa-w6vzyrqpc",
+    "manage_roles": false,
+    "role_name": "LabRole",
+    "timeout_seconds": 300,
+    "memory_size": 1024,
+    "apigateway_enabled": false,
+    "keep_warm": false,
+
+    "events": [
+      {
+        "function": "genCsv.lambda_handler",
+        "event_source": {
+          "arn": "arn:aws:s3:::dlandingcasas-mitula",
+          "events": [
+            "s3:ObjectCreated:*"
+          ],
+          "filter": {
+            "Key": {
+              "suffix": "ready.txt"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
