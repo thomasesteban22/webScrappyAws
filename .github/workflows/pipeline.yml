@@ -49,12 +49,12 @@ jobs:
 
       - name: Deploy Lambda (descarga)
         run: |
-          source .venv/bin/activate
+          source venv/bin/activate
           cd descargahtml_mitula
           zappa update dev
 
       - name: Deploy Lambda (genera CSV)
         run: |
-          source .venv/bin/activate
+          source venv/bin/activate
           cd ../generarcsv_mitula
           zappa update dev
