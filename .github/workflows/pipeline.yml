@@ -56,11 +56,6 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:.
           pytest
 
-      - name: Deploy Lambda (descarga)
-        run: |
-          source venv/bin/activate
-          cd descargahtml_mitula
-          zappa update dev
 
       - name: Deploy Lambda (genera CSV)
         run: |
